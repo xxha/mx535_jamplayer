@@ -1,15 +1,12 @@
-
-LIB_NAME = libSUSI-3.02
-LIB_LINK_NAME = $(LIB_NAME).so
-LINKLIB = -Wl,-rpath,./ $(LIB_LINK_NAME)
+CROSS_COMPILE = /home/xxha/cross_compile/gcc-4.1.2-glibc-2.5-nptl-3/arm-none-linux-gnueabi/bin/arm-none-linux-gnueabi-
 CFLAGS = -Wall -O2
 
 CC=gcc
+
 all:jamplayer
+
 jamplayer:*.c
-#	$(CC) $^ -o $@
-	$(CC) $^ -o $@ $(LINKLIB) 
-#	$(CC) $(CFLAGS) $^ -o $(basename $< .c) $< $(LINKLIB) 
+	$(CROSS_COMPILE)$(CC) $^ -o $@
 
 clean:
 	rm -f jamplayer

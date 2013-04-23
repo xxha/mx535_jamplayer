@@ -15,7 +15,7 @@
 /*																			*/
 /*	Revisions:		1.1	added dynamic memory allocation						*/
 /*					1.11 added multi-page memory allocation for file_buffer */
-/*                    to permit DOS version to read files larger than 64K   */
+/*		    to permit DOS version to read files larger than 64K   */
 /*					1.2 fixed control port initialization for ByteBlaster	*/
 /*					2.2 updated usage message, added support for alternate	*/
 /*					  cable types, moved porting macros in jamport.h,		*/
@@ -66,13 +66,12 @@ typedef unsigned long DWORD;
 #include <sys/stat.h>
 
 #include "jamexprt.h"
+#include "gpio.h"
 
-
-#define	JTAG_TDO	0
-#define	JTAG_TMS	5
-#define	JTAG_TCK	4
-#define	JTAG_TDI	6
-#define ATOM_GPO3       7
+#define	JTAG_TDO	18
+#define	JTAG_TMS	14
+#define	JTAG_TCK	13
+#define	JTAG_TDI	14
 
 /************************************************************************
 *
@@ -209,35 +208,31 @@ int jam_jtag_io(int tms, int tdi, int read_tdo)
 		jtag_hardware_initialized = TRUE;
 	}
 
-	data = ((tdi ? (0x01<<JTAG_TDI) : 0) | (tms ? (0x01<<JTAG_TMS) : 0));
-	result = SusiIOWriteMultiEx((0x01<<JTAG_TCK)|(0x01<<JTAG_TDI)|(0x01<<JTAG_TMS), data);
-	if (result == FALSE) {
-		printf("SusiIOWriteMulti() failed\n");
-		exit(1);
-	}
+	if(tms)
+		setgpiodata(PORT_F, JTAG_TMS, 1);
+	else
+		setgpiodata(PORT_F, JTAG_TMS, 0);
 
-	tck_delay = 2000000;
-	if (tck_delay != 0) delay_loop(tck_delay);
+	if(tdi)
+		setgpiodata(PORT_E, JTAG_TDI, 1);
+	else
+		setgpiodata(PORT_E, JTAG_TDI, 0);
 
 	if (read_tdo)
 	{
-		result = SusiIOReadMultiEx(0x01<<JTAG_TDO, &tdo);
-		if (result == FALSE) {
-			printf("SusiIOReadEx() failed\n");
+		result = getgpiodata(PORT_F, JTAG_TDO, &tdo);
+		if (result < 0) {
+			printf("Read gpio failed\n");
 			exit(1);
 		}
 	}
-	tck_delay = 2000000;
+
+	setgpiodata(PORT_F, JTAG_TCK, 1);
+
 	if (tck_delay != 0) delay_loop(tck_delay);
 
-	data |= (0x01<<JTAG_TCK);
-	result = SusiIOWriteMultiEx((0x01<<JTAG_TCK)|(0x01<<JTAG_TDI)|(0x01<<JTAG_TMS), data);
-	if (result == FALSE) {
-		printf("SusiIOWriteMulti() failed\n");
-		exit(1);
-	}
+	setgpiodata(PORT_F, JTAG_TCK, 0);
 
-	tck_delay = 4000000;
 	if (tck_delay != 0) delay_loop(tck_delay);
 
 	return (tdo);
@@ -647,21 +642,21 @@ DWORD get_tick_count(void)
 
 void calibrate_delay(void)
 {
-	one_ms_delay = 1000L;
+	one_ms_delay = 100000L;
 }
 
 char *error_text[] =
 {
-/* JAMC_SUCCESS            0 */ "success",
+/* JAMC_SUCCESS	    0 */ "success",
 /* JAMC_OUT_OF_MEMORY      1 */ "out of memory",
-/* JAMC_IO_ERROR           2 */ "file access error",
+/* JAMC_IO_ERROR	   2 */ "file access error",
 /* JAMC_SYNTAX_ERROR       3 */ "syntax error",
 /* JAMC_UNEXPECTED_END     4 */ "unexpected end of file",
 /* JAMC_UNDEFINED_SYMBOL   5 */ "undefined symbol",
 /* JAMC_REDEFINED_SYMBOL   6 */ "redefined symbol",
 /* JAMC_INTEGER_OVERFLOW   7 */ "integer overflow",
 /* JAMC_DIVIDE_BY_ZERO     8 */ "divide by zero",
-/* JAMC_CRC_ERROR          9 */ "CRC mismatch",
+/* JAMC_CRC_ERROR	  9 */ "CRC mismatch",
 /* JAMC_INTERNAL_ERROR    10 */ "internal error",
 /* JAMC_BOUNDS_ERROR      11 */ "bounds error",
 /* JAMC_TYPE_MISMATCH     12 */ "type mismatch",
@@ -671,7 +666,7 @@ char *error_text[] =
 /* JAMC_RETURN_UNEXPECTED 16 */ "RETURN unexpected",
 /* JAMC_ILLEGAL_SYMBOL    17 */ "illegal symbol name",
 /* JAMC_VECTOR_MAP_FAILED 18 */ "vector signal name not found",
-/* JAMC_USER_ABORT        19 */ "execution cancelled",
+/* JAMC_USER_ABORT	19 */ "execution cancelled",
 /* JAMC_STACK_OVERFLOW    20 */ "stack overflow",
 /* JAMC_ILLEGAL_OPCODE    21 */ "illegal instruction code",
 /* JAMC_PHASE_ERROR       22 */ "phase error",
@@ -797,14 +792,14 @@ int main(int argc, char **argv)
 	{
 		fprintf(stderr, "Usage:  jam [options] <filename>\n");
 		fprintf(stderr, "\nAvailable options:\n");
-		fprintf(stderr, "    -h          : show help message\n");
-		fprintf(stderr, "    -v          : show verbose messages\n");
+		fprintf(stderr, "    -h	  : show help message\n");
+		fprintf(stderr, "    -v	  : show verbose messages\n");
 		fprintf(stderr, "    -a<action>  : specify action name (Jam STAPL)\n");
 		fprintf(stderr, "    -d<var=val> : initialize variable to specified value (Jam 1.1)\n");
 		fprintf(stderr, "    -d<proc=1>  : enable optional procedure (Jam STAPL)\n");
 		fprintf(stderr, "    -d<proc=0>  : disable recommended procedure (Jam STAPL)\n");
 		fprintf(stderr, "    -s<port>    : serial port name (for BitBlaster)\n");
-		fprintf(stderr, "    -r          : don't reset JTAG TAP after use\n");
+		fprintf(stderr, "    -r	  : don't reset JTAG TAP after use\n");
 		exit_status = 1;
 	}
 	else if ((workspace_size > 0) &&
@@ -1040,44 +1035,42 @@ int main(int argc, char **argv)
 void initialize_jtag_hardware()
 {
 	int result, done, op;
+	int data;
 
-	result = SusiDllInit();
-	if (result == FALSE) {
-		printf("SusiDllInit() failed\n");
+	result = gpio_init();
+	if(result < 0){
+		printf("GPIO init failed!\n");
 		exit(1);
 	}
 
-	result = SusiIOAvailable();
-	if (result == 0) {
-		printf("SusiIOAvailable() failed\n");
-		SusiDllUnInit();
-		exit(1);
-	}
+	/*TMS = PORT_F +14*/
+	setpullup(PORT_F, JTAG_TMS, 1);
+	setgpiodir(PORT_F, JTAG_TMS, OUTPUT);
+	setgpiodata(PORT_F, JTAG_TMS, 0);
 
-	result = SusiIOWriteMultiEx((0x01<<JTAG_TCK)|(0x01<<JTAG_TDI)|(0x01<<JTAG_TMS)|(0x01<<ATOM_GPO3), 0);
-        if (result == FALSE) {
-                printf("SusiIOWriteEx() failed\n");
-		exit(1);
-        }
+	/*TCK = PORT_F +13*/
+	setpullup(PORT_F, JTAG_TCK, 1);
+	setgpiodir(PORT_F, JTAG_TCK, OUTPUT);
+	setgpiodata(PORT_F, JTAG_TCK, 0);
 
+	/*TDI = PORT_E + 14*/
+	setpullup(PORT_E, JTAG_TDI, 1);
+	setgpiodir(PORT_E, JTAG_TDI, OUTPUT);
+	setgpiodata(PORT_E, JTAG_TDI, 0);
+
+	/*TDO = PORT_F +13, it's input*/
+	setpullup(PORT_F, JTAG_TDO, 1);
+	setgpiodir(PORT_F, JTAG_TDO, INPUT);
 }
 
 void close_jtag_hardware()
 {
 	int result;
-
-	result = SusiIOWriteMultiEx((0x01<<JTAG_TCK)|(0x01<<JTAG_TDI)|(0x01<<JTAG_TMS)|(0x01<<ATOM_GPO3), 0);
-        if (result == FALSE) {
-                printf("SusiIOWriteEx() failed\n");
-		exit(1);
-        }
-	
-	result = SusiDllUnInit();
-	if (result == FALSE) {
-		printf("SusiDllUnInit() failed\n");
+	result = gpio_exit();
+	if(result < 0){
+		printf("GPIO uninit failed!\n");
 		exit(1);
 	}
-
 }
 
 
