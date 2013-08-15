@@ -1027,7 +1027,7 @@ int main(int argc, char **argv)
 #endif /* MEM_TRACKER */
 
 
-	return (exit_status);
+	return (exit_code);
 }
 
 
