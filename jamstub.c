@@ -68,10 +68,10 @@ typedef unsigned long DWORD;
 #include "jamexprt.h"
 #include "gpio.h"
 
-#define	JTAG_TDO	18
-#define	JTAG_TMS	14
-#define	JTAG_TCK	13
-#define	JTAG_TDI	14
+#define	JTAG_TDO	21
+#define	JTAG_TDI	22
+#define	JTAG_TMS	23
+#define	JTAG_TCK	24
 
 /************************************************************************
 *
@@ -209,29 +209,29 @@ int jam_jtag_io(int tms, int tdi, int read_tdo)
 	}
 
 	if(tms)
-		setgpiodata(PORT_F, JTAG_TMS, 1);
+		setgpiodata(PORT_D, JTAG_TMS, 1);
 	else
-		setgpiodata(PORT_F, JTAG_TMS, 0);
+		setgpiodata(PORT_D, JTAG_TMS, 0);
 
 	if(tdi)
-		setgpiodata(PORT_E, JTAG_TDI, 1);
+		setgpiodata(PORT_D, JTAG_TDI, 1);
 	else
-		setgpiodata(PORT_E, JTAG_TDI, 0);
+		setgpiodata(PORT_D, JTAG_TDI, 0);
 
 	if (read_tdo)
 	{
-		result = getgpiodata(PORT_F, JTAG_TDO, &tdo);
+		result = getgpiodata(PORT_D, JTAG_TDO, &tdo);
 		if (result < 0) {
 			printf("Read gpio failed\n");
 			exit(1);
 		}
 	}
 
-	setgpiodata(PORT_F, JTAG_TCK, 1);
+	setgpiodata(PORT_D, JTAG_TCK, 1);
 
 	if (tck_delay != 0) delay_loop(tck_delay);
 
-	setgpiodata(PORT_F, JTAG_TCK, 0);
+	setgpiodata(PORT_D, JTAG_TCK, 0);
 
 	if (tck_delay != 0) delay_loop(tck_delay);
 
@@ -1043,24 +1043,24 @@ void initialize_jtag_hardware()
 		exit(1);
 	}
 
-	/*TMS = PORT_F +14*/
-	setpullup(PORT_F, JTAG_TMS, 1);
-	setgpiodir(PORT_F, JTAG_TMS, OUTPUT);
-	setgpiodata(PORT_F, JTAG_TMS, 0);
+	/*TMS = PORT_D + 23*/
+	setpullup(PORT_D, JTAG_TMS, 1);
+	setgpiodir(PORT_D, JTAG_TMS, OUTPUT);
+	setgpiodata(PORT_D, JTAG_TMS, 0);
 
-	/*TCK = PORT_F +13*/
-	setpullup(PORT_F, JTAG_TCK, 1);
-	setgpiodir(PORT_F, JTAG_TCK, OUTPUT);
-	setgpiodata(PORT_F, JTAG_TCK, 0);
+	/*TCK = PORT_D + 24*/
+	setpullup(PORT_D, JTAG_TCK, 1);
+	setgpiodir(PORT_D, JTAG_TCK, OUTPUT);
+	setgpiodata(PORT_D, JTAG_TCK, 0);
 
-	/*TDI = PORT_E + 14*/
-	setpullup(PORT_E, JTAG_TDI, 1);
-	setgpiodir(PORT_E, JTAG_TDI, OUTPUT);
-	setgpiodata(PORT_E, JTAG_TDI, 0);
+	/*TDI = PORT_D + 22*/
+	setpullup(PORT_D, JTAG_TDI, 1);
+	setgpiodir(PORT_D, JTAG_TDI, OUTPUT);
+	setgpiodata(PORT_D, JTAG_TDI, 0);
 
-	/*TDO = PORT_F +13, it's input*/
-	setpullup(PORT_F, JTAG_TDO, 1);
-	setgpiodir(PORT_F, JTAG_TDO, INPUT);
+	/*TDO = PORT_D + 21, it's input*/
+	setpullup(PORT_D, JTAG_TDO, 1);
+	setgpiodir(PORT_D, JTAG_TDO, INPUT);
 }
 
 void close_jtag_hardware()
