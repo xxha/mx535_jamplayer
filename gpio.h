@@ -18,12 +18,13 @@ extern "C" {
 #include <fcntl.h>
 #include <signal.h>
 
-#define	PORT_A						0x0
-#define	PORT_B						0x1
-#define	PORT_C						0x2
-#define	PORT_D						0x3
-#define	PORT_E						0x4
-#define	PORT_F						0x5
+#define	PORT_1						0x1
+#define	PORT_2						0x2
+#define	PORT_3						0x3
+#define	PORT_4						0x4
+#define	PORT_5						0x5
+#define	PORT_6						0x6
+#define	PORT_7 						0x7
 
 #define	OUTPUT						0x1
 #define INPUT						0x0

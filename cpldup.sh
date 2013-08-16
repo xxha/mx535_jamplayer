@@ -6,7 +6,7 @@ if [ "$#" != "1" ]; then
 	exit 1
 fi
 
-jamplayer -aprogram -ddo_real_time_isp=1 $1
+tx300s_jamplayer -aprogram -ddo_real_time_isp=1 $1
 
 if [ "$?" != "0" ]; then
 	echo "cpld upgrade failed"
